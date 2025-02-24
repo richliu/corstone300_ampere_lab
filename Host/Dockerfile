@@ -17,7 +17,9 @@
 #       Move to Ampere Altra ARM64 platform and clean some code
 
 FROM ubuntu:20.04
-ENV DEBIAN_FRONTEND noninteractive
+RUN DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 ENV EVAL_SRC_DIR="/home/ubuntu"
 ENV FVP_300="FVP_Corstone_SSE-300"
@@ -26,7 +28,7 @@ ENV FVP_300="FVP_Corstone_SSE-300"
 RUN echo "Acquire::http::Proxy \"http://192.168.1.254:3142\";" >> /etc/apt/apt.conf
 
 ## User added
-RUN useradd -m ubuntu && echo "ubuntu:ubuntu" | chpasswd
+RUN useradd -m -s /bin/bash ubuntu && echo "ubuntu:ubuntu" | chpasswd
 RUN usermod -aG sudo ubuntu
 
 
@@ -58,7 +60,11 @@ RUN apt-get update && \
     openssh-server apt-utils \
     python3.9 libpython3.9
 
-ENV USER_NAME ubuntu
+RUN sudo apt-get install -y tzdata
+RUN sudo ln -fs /usr/share/zoneinfo/Asia/Taiwan /etc/localtime
+RUN sudo dpkg-reconfigure --frontend noninteractive tzdata
+
+ENV USER_NAME=ubuntu
 RUN echo "${USER_NAME} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER_NAME} 
 
 # +----------------------------------------------------------------------------
@@ -87,6 +93,13 @@ RUN git clone https://github.com/HimaxWiseEyePlus/YOLOv8_on_WE2.git --depth=1
 ENV EVAL_MLFVP_DIR="${EVAL_SRC_DIR}/YOLOv8_on_WE2"
 WORKDIR ${EVAL_MLFVP_DIR}
 RUN git submodule update --init
+
+# +----------------------------------------------------------------------------
+# | Download corstone300_ampere_lab Source code
+# +----------------------------------------------------------------------------
+WORKDIR ${EVAL_SRC_DIR}
+# Enable it when become public
+# RUN git clone https://github.com/richliu/corstone300_ampere_lab.git --depth=1
 
 # +----------------------------------------------------------------------------
 # | Download and install Arm Corstone-300 FVP
@@ -134,8 +147,15 @@ RUN vela --accelerator-config ethos-u55-64 \
     --memory-mode My_Mem_Mode_Parent \
     --output-dir ./img_yolov8_pose_192 \
     ./img_yolov8_pose_192/yolov8n-pose_full_integer_quant.tflite
-RUN cp ${EVAL_MLFVP_DIR}/vela/* ${EVAL_KIT_DIR}/resources_downloaded/ -a
 WORKDIR ${EVAL_KIT_DIR}
+RUN ls ${EVAL_MLFVP_DIR}/vela/
+RUN ls ${EVAL_KIT_DIR}/resources_downloaded/
+RUN cp -a ${EVAL_MLFVP_DIR}/vela/* ${EVAL_KIT_DIR}/resources_downloaded/
+RUN ls ${EVAL_MLFVP_DIR}/vela/
+RUN ls ${EVAL_KIT_DIR}/resources_downloaded/
+
+# It will fail when run this script, but if run it in docker again
+# should be ok
 RUN ./build_default.py --npu-config-name ethos-u55-64
 
 # yolov8 example
@@ -155,4 +175,23 @@ RUN sudo bash -c 'echo "export VISIBLE=now" >> /etc/profile'
 RUN sudo sed -i "s/UsePAM yes/UsePAM no/" /etc/ssh/sshd_config
 RUN sudo ssh-keygen -A
 
+# RUN sudo /usr/sbin/sshd -D &
+
+RUN sudo apt-get update && \
+    sudo apt-get install -y tigervnc-standalone-server kde-plasma-desktop && \
+    mkdir -p ~/.vnc && \
+    echo "ampere" | vncpasswd -f > ~/.vnc/passwd && \
+    chmod 600 ~/.vnc/passwd
+
+COPY vnc.conf /etc/vnc.conf
+COPY start-vnc.sh /home/ubuntu/start-vnc.sh
+RUN sudo chmod +x /home/ubuntu/start-vnc.sh
+# RUN sudo rm -f /tmp/.X11-unix/X1
+# RUN mkdir -p /tmp/.X11-unix && sudo chown root:root /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
+
+EXPOSE 5901
+
+ENTRYPOINT ["/home/ubuntu/start-vnc.sh"]
+# ENTRYPOINT ["tail"]
+# CMD ["-f", "/dev/null"]
 

@@ -22,15 +22,22 @@ build:
 	docker build -t $(DOCKER_IMAGE) . 2>&1 | tee build.log
 	docker images
 
+# run the docker image on background
+daemon:
+	docker run --rm -d --privileged -p 5901:5901 $(DOCKER_IMAGE)
+
+# run the docker image in current bash
 run:
 	docker run --rm -it \
-				-v /tmp/.X11-unix:/tmp/.X11-unix \
-				--volume="/home/$(USER)/.Xauthority:/root/.Xauthority:rw" \
-				--privileged \
-				--workdir /home/ubuntu \
-				-e DISPLAY=:0 \
-				-p 2222:22 \
-				$(DOCKER_IMAGE) bash
+		-v /tmp/.X11-unix:/tmp/.X11-unix \
+		-v /home/ubuntu/corstone300_ampere_lab:/home/ubuntu/corstone300_ampere_lab \
+		--volume="/home/$(USER)/.Xauthority:/root/.Xauthority:rw" \
+		--privileged \
+		--workdir /home/ubuntu \
+		-e DISPLAY=:0 \
+		-p 2222:22 \
+		-p 5901:5901 \
+		$(DOCKER_IMAGE) bash
 
 clean:
 	docker image ls
