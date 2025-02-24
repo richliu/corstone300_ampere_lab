@@ -49,8 +49,13 @@ distclean:
 pull:
 	docker pull $(DOCKER_IMAGE)
 
+tag:
+	docker tag $(DOCKER_IMAGE):latest localhost:5000/$(DOCKER_IMAGE):latest
+
+# First time run make tag before run make push
+# push to local docker regestry, dockerhub is not good for traing lab right now
 push:
-	docker push $(DOCKER_IMAGE)
+	docker push localhost:5000/$(DOCKER_IMAGE):latest
 
 # +------------------------------------------------------------------
 # | Save & Load Docker images
