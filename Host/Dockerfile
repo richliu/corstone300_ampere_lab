@@ -14,7 +14,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ChangeLog: 
-#       Move to Ampere Altra ARM64 platform and clean some code
+#       Move to Ampere Altra ARM64 platform and clean some script 
 
 FROM ubuntu:20.04
 RUN DEBIAN_FRONTEND=noninteractive
@@ -25,7 +25,7 @@ ENV EVAL_SRC_DIR="/home/ubuntu"
 ENV FVP_300="FVP_Corstone_SSE-300"
 
 # Setup Local Proxy Server
-RUN echo "Acquire::http::Proxy \"http://192.168.1.254:3142\";" >> /etc/apt/apt.conf
+# RUN echo "Acquire::http::Proxy \"http://192.168.1.254:3142\";" >> /etc/apt/apt.conf
 
 ## User added
 RUN useradd -m -s /bin/bash ubuntu && echo "ubuntu:ubuntu" | chpasswd
@@ -78,6 +78,7 @@ RUN curl -k -L "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10-2020
 
 USER ubuntu
 WORKDIR ${EVAL_SRC_DIR}
+COPY scripts/ ./scripts/
 # Check versions
 RUN gcc --version && g++ --version && python3 --version
 RUN git config --global http.sslVerify false
@@ -98,8 +99,6 @@ RUN git submodule update --init
 # | Download corstone300_ampere_lab Source code
 # +----------------------------------------------------------------------------
 WORKDIR ${EVAL_SRC_DIR}
-# Enable it when become public
-# RUN git clone https://github.com/richliu/corstone300_ampere_lab.git --depth=1
 
 # +----------------------------------------------------------------------------
 # | Download and install Arm Corstone-300 FVP
@@ -148,23 +147,11 @@ RUN vela --accelerator-config ethos-u55-64 \
     --output-dir ./img_yolov8_pose_192 \
     ./img_yolov8_pose_192/yolov8n-pose_full_integer_quant.tflite
 WORKDIR ${EVAL_KIT_DIR}
-RUN ls ${EVAL_MLFVP_DIR}/vela/
-RUN ls ${EVAL_KIT_DIR}/resources_downloaded/
 RUN cp -a ${EVAL_MLFVP_DIR}/vela/* ${EVAL_KIT_DIR}/resources_downloaded/
-RUN ls ${EVAL_MLFVP_DIR}/vela/
-RUN ls ${EVAL_KIT_DIR}/resources_downloaded/
 
 # It will fail when run this script, but if run it in docker again
 # should be ok
 RUN ./build_default.py --npu-config-name ethos-u55-64
-
-# yolov8 example
-# RUN mkdir build_img_yolov8_192
-# WORKDIR ${ITRI_MLFVP_DIR}/ml-embedded-evaluation-kit/build_img_yolov8_192
-# RUN cmake ../ -DUSE_CASE_BUILD=img_yolov8_192 \-DETHOS_U_NPU_ENABLED=ON
-# RUN make -j8
-
-
 
 RUN sudo mkdir -p /var/run/sshd
 RUN echo 'root:root' |sudo chpasswd # echo password | passwd --stdin root
@@ -175,6 +162,7 @@ RUN sudo bash -c 'echo "export VISIBLE=now" >> /etc/profile'
 RUN sudo sed -i "s/UsePAM yes/UsePAM no/" /etc/ssh/sshd_config
 RUN sudo ssh-keygen -A
 
+# Enable it if want to run sshd
 # RUN sudo /usr/sbin/sshd -D &
 
 RUN sudo apt-get update && \
@@ -182,16 +170,16 @@ RUN sudo apt-get update && \
     mkdir -p ~/.vnc && \
     echo "ampere" | vncpasswd -f > ~/.vnc/passwd && \
     chmod 600 ~/.vnc/passwd
+RUN apt clean all
 
 COPY vnc.conf /etc/vnc.conf
 COPY start-vnc.sh /home/ubuntu/start-vnc.sh
 RUN sudo chmod +x /home/ubuntu/start-vnc.sh
-# RUN sudo rm -f /tmp/.X11-unix/X1
-# RUN mkdir -p /tmp/.X11-unix && sudo chown root:root /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 
 EXPOSE 5901
+EXPOSE 22
+# Default DIR is /home/ubuntu
+WORKDIR ${EVAL_SRC_DIR}
 
 ENTRYPOINT ["/home/ubuntu/start-vnc.sh"]
-# ENTRYPOINT ["tail"]
-# CMD ["-f", "/dev/null"]
 
