@@ -5,6 +5,8 @@
 LABUSER_COUNT=3
 
 NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[0].address}')
+BASE_PORT=30000
+i=0
 
 # Apply new seting incase delete old setting 
 make apply-setting
@@ -21,7 +23,7 @@ kind: Service
 metadata:
   name: ${LABUSER_ID}-ssh
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
     app: lab-env
     statefulset.kubernetes.io/pod-name: ${POD_NAME}  
@@ -29,6 +31,7 @@ spec:
   - protocol: TCP
     port: 22
     targetPort: 22
+    nodePort: $((BASE_PORT + i * 2)) # Each service use two ports
 EOF
 
   # LoadBalancer Service for VNC
@@ -38,7 +41,7 @@ kind: Service
 metadata:
   name: ${LABUSER_ID}-vnc
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
     app: lab-env
     statefulset.kubernetes.io/pod-name: ${POD_NAME}
@@ -46,6 +49,7 @@ spec:
   - protocol: TCP
     port: 5901
     targetPort: 5901
+    nodePort: $((BASE_PORT + i * 2 + 1)) # VNC is second port
 EOF
 done
 
