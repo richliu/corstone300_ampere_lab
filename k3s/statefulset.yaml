@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: lab-pod
+spec:
+  serviceName: lab-headless
+  replicas: 3  
+  selector:
+    matchLabels:
+      app: lab-env
+  template:
+    metadata:
+      labels:
+        app: lab-env
+    spec:
+      containers:
+      - name: lab-container
+        securityContext:
+          privileged: true
+        image: richliu/armmlek22p4:latest 
+        env:
+        - name: POD_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name  # get Pod name (ex: lab-pod-0）
+        ports:
+        - containerPort: 22   # SSH
+        - containerPort: 5901 # VNC
+        volumeMounts:
+        - name: lab-storage
+          mountPath: /home/lab
+  volumeClaimTemplates:
+  - metadata:
+      name: lab-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 5Gi

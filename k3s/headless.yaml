@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lab-headless
+spec:
+  clusterIP: None
+  selector:
+    app: lab-env
+  ports:
+  - protocol: TCP
+    port: 22
+    name: ssh
+  - port: 5901
+    name: vnc    
