@@ -3,16 +3,20 @@ export DOCKER_IMAGE = richliu/armmlek22p4
 export DOCKER_IMAGE_TAR = armmlek22p4.tar
 
 help:
-	@echo "+-----------------------------------------------------"
-	@echo "| Build Docker Images"
-	@echo "+-----------------------------------------------------"
-	@echo "\$$ make build"
-	@echo "\$$ make run"
-	@echo "\$$ make clean"
-	@echo "\$$ make distclean"
-	@echo "\$$ make save | load"
-	@echo "\$$ make push | pull"
+	@echo "make [OPTION]"
 	@echo ""
+	@echo "[OPTIONS]"
+	@echo "    build: build the docker image"
+	@echo "    daemon: run the docker image as daemon"
+	@echo "    run: run the docker image(for test)"
+	@echo "    clean: clean the docker image"
+	@echo "    distclean: clean all cache when build cache and docker image"
+	@echo "    save: save dokcer image as a physical image file"
+	@echo "    save-zip: save dokcer image as a physical image file and zip it"
+	@echo "    load: load docker image from a physicla image file"
+	@echo "    tag: tag current docker image with :latest tag"
+	@echo "    push: push the current docker image to docker registry"
+	@echo "    pull: pull the docker image from docker registry"
 
 # +------------------------------------------------------------------
 # | Build Docker image
@@ -24,7 +28,7 @@ build:
 
 # run the docker image on background
 daemon:
-	docker run --rm -d --privileged -p 5901:5901 $(DOCKER_IMAGE)
+	docker run --rm -d --privileged -p 5901:5901 -p 2222:22 $(DOCKER_IMAGE)
 
 # run the docker image in current bash
 run:

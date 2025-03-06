@@ -29,6 +29,13 @@ spec:
         volumeMounts:
         - name: lab-storage
           mountPath: /home/lab
+        resources:
+          limits:
+            cpu: "4"      # Limit 4CPU cores
+            memory: "8Gi" # Limit 8GB memory
+          requests:
+            cpu: "2"      # Require 4CPU cores
+            memory: "5Gi" # Require 8GB memory
   volumeClaimTemplates:
   - metadata:
       name: lab-storage
