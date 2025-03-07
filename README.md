@@ -1,94 +1,91 @@
 # Outline
 
-Here is demostrate scripts to teach how to build a corestone 3000 fvp yolo learning lab with kebernates on Ampere Altra platform. 
-
+This repository contains demonstration scripts to guide you through building a Corestone 3000 FVP YOLO Learning Lab using Kubernetes on the Ampere Altra platform.
 
 # Host
 
-The directory Host is the docker image build scripts for the Ampere host machine.
+The `Host` directory contains Docker image build scripts tailored for the Ampere host machine.
 
-In the directory
+In the `Host` directory, run:
+
 ```
 make build
 ```
 
-it will use docker to build a image for corestone3000 ampere lab,
-then run the following command to test it
+This command uses Docker to build an image for the Corestone 3000 Ampere Lab. After building, test it with the following command:
+
 
 ```
 make daemon
 ```
 
-Unlike regular docker image, it will not bring you to bash console,
-because it needs to stop on latest line for kubernetes.
+Unlike a typical Docker image, this will not launch an interactive Bash console. Instead, it stops at the latest line to ensure compatibility with Kubernetes.
+You can access the environment using any VNC viewer at either:
 
-Right now it can use anyone VNC viewer to access it
 ```<host ip>:5901``` or
 ```<host ip>:1``` depend on your vncviewer
 
-Default VNC password is ```ampere```
+The default VNC password is ```ampere```
 
-More options can use command help to display it.
+For additional options, use the help command to display them:
 ```
 make help
 ```
 
-# kubernetes
+# Kubernetes
 
-## Install k3s (lightweight kubernetes)
-In this lab environment, we choice the Lightweight Kubernetes k3s,
-it would be more easy to deploy on single server, homelab and edge .. e.g.
+## Install k3s (Lightweight Kubernetes)
 
-change to directory to k3s and run following command to install k3s
+In this lab environment, we use k3s, a lightweight Kubernetes distribution. It’s easier to deploy on a single server, homelab, or edge device, making it ideal for this setup.
+Change to the `k3s` directory and run the following command to install k3s:
 
 ```
 cd k3s ; make install
 ```
 
-After install, it can use command to check current status
+After installation, check the current status with this command:
 
 ```
 kubectl get nodes
 ```
 
-The output will be
+The expected output will look like this:
 
 ```
 NAME      STATUS   ROLES                  AGE   VERSION
 armtest   Ready    control-plane,master   9m    v1.31.5+k3s1
 ```
 
-
 ## Setup Registry Proxy 
 
-In the lab, every instance to pull the image from docker hub is not reasonable, so we can run a registry sever on local. registry server has docker image. here is command to run registry server in the docker.
+In this lab, pulling images directly from Docker Hub for every instance is inefficient. Instead, we can run a local registry server using a Docker image. Use the following command to start the registry server in Docker:
 
 ```
 sudo docker run -d -p 5000:5000 --restart always --name registry registry:2
 ```
 
-or run following command in k3s directory
+Alternatively, run this command from the `k3s` directory:
 
 ```
 make run-registry
 ```
 
-Check whether it is running
+To verify that the registry is running, use:
 
 ```
 docker ps
 ```
 
-The output will be
+The output should resemble:
 
 ```
 CONTAINER ID   IMAGE        COMMAND                  CREATED       STATUS       PORTS                                       NAMES
 a61fbb06f19b   registry:2   "/entrypoint.sh /etc…"   1 days ago   Up 5 hours   0.0.0.0:5000->5000/tcp, :::5000->5000/tcp   registry
 ```
 
-### alias
+### Alias
 
-it can easy to run alias command to simply the input command, can put it to ~/.bashrc
+To simplify command inputs, you can add an alias to your `~/.bashrc` file. For example:
 
 ```
 alias k=sudo kubectl 
@@ -97,31 +94,30 @@ alias k=sudo kubectl
 
 ### Create LAB Users
 
-Before create lab users, it needs to clean current lab users.
-
-Show current lab users
+Before creating new lab users, you need to remove any existing ones.
+To display current lab users, run:
 
 ```
 make show-allpods
 ```
 
-The output will be
+The output will look like this:
 
 ```
 lab-1-ssh      NodePort    10.43.81.154    <none>        22:30000/TCP      1d    app=lab-env,statefulset.kubernetes.io/pod-name=lab-pod-0
 ```
 
-Remove current lab users
+To remove current lab users, use:
 
 ```make kill-allpods```
 
-Create lab users
+To create new lab users, run:
 
 ```
 make create-lab
 ```
 
-At the later message output, it will show lab IP and mapping ports
+The output will display the lab IP addresses and mapped ports for each user, such as:
 
 ```
 LABUSER lab-1:
@@ -135,32 +131,35 @@ LABUSER lab-3:
   VNC:  vnc://192.168.1.38:30005
 ```
 
-Default will create three lab users.
-If wants to create more users, it needs to modify the statefulset.yaml
-on around line 7, defult is 3, it can fill to fit current requirement.
+By default, this creates three lab users. To create more users, modify the `statefulset.yaml` file around line 7, where the default is set to:
+
 ```replicas: 3```
 
-Then, modify the create-account.sh and modify LABUSER_COUNT=3 to coinstiance number in the file statefulset.yaml.
+Adjust this value to match your requirements. Then, update the `create-account.sh` file by changing `LABUSER_COUNT=3` to the same number of instances specified in `statefulset.yaml`.
 
-Run following command to apply new configuration
+Apply the new configuration with these commands:
 
 ```
 make kill-allpods
 make create-lab
 ```
 
-### Forget forward port 
+### Forgot Forwarded Ports?
 
-the defualt port start from port 30000 + N\*2 , default is for ssh port and disable by default. 30000 + N\*2 + 1 is VNC port, N = LAB user order.
+The default port assignments start at `30000 + N*2` for SSH (disabled by default) and `30000 + N*2 + 1` for VNC, where `N` is the lab user’s order (e.g., 0, 1, 2, ...).
+To retrieve port information, use:
 
-but still can use command **kubectl get svc** to get the information,
-or run following command to get the port information
+```
+kubectl get svc
+```
+
+Alternatively, run this command to view detailed pod and port information:
 
 ```
 make show-allpods
 ```
 
-The output will be
+The output will look like this:
 
 ```
 NAME           TYPE           CLUSTER-IP      EXTERNAL-IP    PORT(S)          AGE
@@ -168,7 +167,6 @@ kubernetes     ClusterIP      10.43.0.1       <none>         443/TCP          18
 lab-1-ssh      LoadBalancer   10.43.35.17     192.168.1.38   22:30164/TCP     18m
 lab-1-vnc      LoadBalancer   10.43.64.151    192.168.1.38   5901:30136/TCP   18m
 ```
-
 
 ## Reference Document
  [Corstone-300 FVP Examples](https://github.com/heslabs/corstone300_fvp_yolo)
