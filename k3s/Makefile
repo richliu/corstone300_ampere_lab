@@ -9,6 +9,8 @@ help:
 	@echo "    create-lab: create lab environment"
 	@echo "    kill-allpods: kill all lab environment"
 	@echo "    show-allpods: show currnet lab export ports"
+	@echo "    apply-setting: Apply new setting"
+
 
 install-k3s:
 	curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE="644"  sh -s -

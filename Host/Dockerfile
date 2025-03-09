@@ -175,6 +175,8 @@ RUN apt clean all
 COPY vnc.conf /etc/vnc.conf
 COPY start-vnc.sh /home/ubuntu/start-vnc.sh
 RUN sudo chmod +x /home/ubuntu/start-vnc.sh
+RUN sudo balooctl disable
+RUN balooctl disable
 
 EXPOSE 5901
 EXPOSE 22
