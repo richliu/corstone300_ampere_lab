@@ -170,7 +170,7 @@ RUN sudo apt-get update && \
     mkdir -p ~/.vnc && \
     echo "ampere" | vncpasswd -f > ~/.vnc/passwd && \
     chmod 600 ~/.vnc/passwd
-RUN apt clean all
+RUN sudo apt clean all
 
 COPY vnc.conf /etc/vnc.conf
 COPY start-vnc.sh /home/ubuntu/start-vnc.sh
