@@ -22,6 +22,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ${LABUSER_ID}-ssh
+  labels:
+    app: lab-env
 spec:
   type: NodePort
   selector:
@@ -40,6 +42,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ${LABUSER_ID}-vnc
+  labels:
+    app: lab-env
 spec:
   type: NodePort
   selector:
