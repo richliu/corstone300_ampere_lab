@@ -26,6 +26,7 @@ You can access the environment using any VNC viewer at either:
 ```<host ip>:1``` depend on your vncviewer
 
 The default VNC password is ```ampere```
+The default system username is, `ubuntu` password is `ubuntu`
 
 For additional options, use the help command to display them:
 ```
@@ -40,7 +41,8 @@ In this lab environment, we use k3s, a lightweight Kubernetes distribution. It�
 Change to the `k3s` directory and run the following command to install k3s:
 
 ```
-cd k3s ; make install
+cd k3s
+make install
 ```
 
 After installation, check the current status with this command:
@@ -83,6 +85,14 @@ CONTAINER ID   IMAGE        COMMAND                  CREATED       STATUS       
 a61fbb06f19b   registry:2   "/entrypoint.sh /etc…"   1 days ago   Up 5 hours   0.0.0.0:5000->5000/tcp, :::5000->5000/tcp   registry
 ```
 
+After running the registry server, push the built demo image to the local registry.
+Run the following commands to tag and push the demo Docker image to the local registry:
+
+```
+make tag
+make push
+```
+
 ### Alias
 
 To simplify command inputs, you can add an alias to your `~/.bashrc` file. For example:
@@ -109,7 +119,9 @@ lab-1-ssh      NodePort    10.43.81.154    <none>        22:30000/TCP      1d   
 
 To remove current lab users, use:
 
-```make kill-allpods```
+```
+make kill-allpods
+```
 
 To create new lab users, run:
 
@@ -167,6 +179,16 @@ kubernetes     ClusterIP      10.43.0.1       <none>         443/TCP          18
 lab-1-ssh      LoadBalancer   10.43.35.17     192.168.1.38   22:30164/TCP     18m
 lab-1-vnc      LoadBalancer   10.43.64.151    192.168.1.38   5901:30136/TCP   18m
 ```
+
+# Corstone-300 FVP Demo
+
+After logging into the system, open kconsole (located at *Start Menu > Applications > System > Konsole*). Then, change to the `/home/ubuntu/scripts/` directory, where you’ll find three scripts:
+
+`1.Build_Vela.sh`: Uses Vela to build the YOLOv8 `.tflite` file for the Arm ML Embedded Evaluation Kit.
+`2.Build_mlAPP.sh`: Compiles an `.axf` executable file using the ML Embedded Evaluation Kit, incorporating the pre-compiled Vela YOLOv8 model from the previous step.
+`3.RunApp.sh`: Launches the Corstone-300 FVP Demo application.
+
+Run the scripts in numerical order as listed.
 
 ## Reference Document
  [Corstone-300 FVP Examples](https://github.com/heslabs/corstone300_fvp_yolo)
